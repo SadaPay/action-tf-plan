@@ -9,6 +9,10 @@ inputs:
     description: Set to true to upload the resulting artifact with the TF plan
     required: false
     default: false
+  validate-terraform:
+    description: Set to true to validate the formatting of the TF files
+    required: false
+    default: true
   working-directory:
     description: Directory where to run the plan command
     required: false
@@ -18,7 +22,8 @@ runs:
   using: "composite"
   steps:
 
-    - name: Validate
+    - if: inputs.validate-terraform == 'true'
+      name: Validate
       shell: bash
       run: terraform validate
 
