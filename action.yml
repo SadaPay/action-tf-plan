@@ -36,8 +36,8 @@ runs:
         terraform plan \
           -out ${{ inputs.output-path }}
 
-    - if: ${{ inputs.upload-artifact == 'true' }}
-      uses: actions/upload-artifact@v2
+    - if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v2.3.1
       with:
         name: plan_output
         if-no-files-found: error
