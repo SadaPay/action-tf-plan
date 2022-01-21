@@ -1,6 +1,10 @@
 name: Terraform plan
 description: Plan the Terraform script and (optionally) upload the resulting artifact
 inputs:
+  comment-pr:
+    description: If true it will add a comment to the related PR (if any) with the plan output
+    required: false
+    default: false
   output-path:
     description: Path where to store the resulting output plan
     required: false
@@ -35,6 +39,44 @@ runs:
         export TF_VAR_github_repo_name="$GITHUB_REPOSITORY"
         terraform plan \
           -out ${{ inputs.output-path }}
+
+    - if: inputs.comment-pr == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
+      name: Comment PR
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        AUTHOR: "github-actions[bot]"
+        COMMENT_TITLE: "Plan output"
+        DELIMITER: "─────────────────────────────────────────────────────────────────────────────"
+      run: |
+        TF_OUTPUT=$(terraform show -no-color ${{ inputs.output-path }})
+        TF_OUTPUT=${TF_OUTPUT#*${DELIMITER}}
+
+        PR_COMMENTS=$(curl --silent --show-error \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3.diff" \
+          https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.number }}/comments)
+
+        COMMENT_ID=$(printf "%s" "$PR_COMMENTS" | jq -r "[.[] | select(.user.login == \"${AUTHOR}\") | select(.body | startswith(\"## ${COMMENT_TITLE}\")) | .id] | first")
+        if [ "${COMMENT_ID}" = "null" ]; then
+          echo "Posting new comment"
+          API_PATH="issues/${{ github.event.number }}/comments"
+          OPERATION="POST"
+
+        else
+          echo "Updating comment: ${COMMENT_ID}"
+          API_PATH="issues/comments/${COMMENT_ID}"
+          OPERATION="PATCH"
+        fi
+
+        DATA=$(echo "$TF_OUTPUT" | jq -R --slurp "{body: (\"## ${COMMENT_TITLE}\n\n\`\`\`\n\" + . + \"\n\`\`\`\")}")
+
+        curl --silent --show-error \
+              -X ${OPERATION} \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${GITHUB_REPOSITORY}/${API_PATH} \
+              -d "$DATA"
 
     - if: inputs.upload-artifact == 'true'
       uses: actions/upload-artifact@v2.3.1
