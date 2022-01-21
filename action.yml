@@ -21,6 +21,10 @@ inputs:
     description: Directory where to run the plan command
     required: false
     default: "."
+outputs:
+  has-changes:
+    description: "Flag to indicate if the plan show changes or not"
+    value: ${{ steps.check_changes.outputs.with_changes }}
 
 runs:
   using: "composite"
@@ -77,6 +81,20 @@ runs:
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               https://api.github.com/repos/${GITHUB_REPOSITORY}/${API_PATH} \
               -d "$DATA"
+
+    - name: Check for changes
+      id: check_changes
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        NO_CHANGES=$(terraform show ${{ inputs.output-path }} | grep "No changes." || true)
+        if [ -n "$NO_CHANGES" ]; then
+          echo "Plan has no changes"
+          echo "::set-output name=with_changes::false"
+        else
+          echo "Plan has changes"
+          echo "::set-output name=with_changes::true"
+        fi
 
     - if: inputs.upload-artifact == 'true'
       uses: actions/upload-artifact@v2.3.1
