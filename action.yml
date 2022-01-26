@@ -5,6 +5,10 @@ inputs:
     description: If true it will add a comment to the related PR (if any) with the plan output
     required: false
     default: false
+  github-token:
+    description: Token to access the GitHub APIs
+    required: false
+    default: ""
   output-path:
     description: Path where to store the resulting output plan
     required: false
@@ -57,7 +61,7 @@ runs:
         TF_OUTPUT=${TF_OUTPUT#*${DELIMITER}}
 
         PR_COMMENTS=$(curl --silent --show-error \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Authorization: token ${{ inputs.github-token }}" \
           -H "Accept: application/vnd.github.v3.diff" \
           https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.number }}/comments)
 
@@ -78,7 +82,7 @@ runs:
         curl --silent --show-error \
               -X ${OPERATION} \
               -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Authorization: token ${{ inputs.github-token }}" \
               https://api.github.com/repos/${GITHUB_REPOSITORY}/${API_PATH} \
               -d "$DATA"
 
