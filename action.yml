@@ -62,7 +62,7 @@ runs:
       run: |
         TF_OUTPUT=$(terraform show -no-color ${{ inputs.output-path }})
         TF_OUTPUT=${TF_OUTPUT#*${DELIMITER}}
-        DATA=$(echo "$TF_OUTPUT" | jq -R --slurp "(\"\`\`\`\n\" + . + \"\n\`\`\`\")}")
+        DATA=$(echo "$TF_OUTPUT" | jq -R --slurp "(\"\`\`\`\n\" + . + \"\n\`\`\`\")")
         echo "::set-output name=plan::${DATA}"
 
     - if: inputs.comment-pr == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
