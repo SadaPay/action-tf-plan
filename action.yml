@@ -62,12 +62,12 @@ runs:
       run: |
         TF_OUTPUT=$(terraform show -no-color ${{ inputs.output-path }})
         TF_OUTPUT=${TF_OUTPUT#*${DELIMITER}}
-        DATA=$(echo "$TF_OUTPUT" | jq -R --slurp "(\"\`\`\`\n\" + . + \"\n\`\`\`\")")
+        DATA=$(printf "\`\`\`\n%s\n\`\`\`" "$TF_OUTPUT" | jq -R --slurp ".")
         echo "::set-output name=plan::${DATA}"
 
     - if: inputs.comment-pr == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
       name: Comment PR
-      uses: SadaPay/action-comment-pr@2a716074bf0625fa4a8fbb65d2680b1fefafcf9d
+      uses: SadaPay/action-comment-pr@49784c1bf0a8ba9f21bf808d1afe50c674a2e8bd
       with:
         title: ${{ inputs.comment-title }}
         body: ${{ steps.plan_output.outputs.plan }}
