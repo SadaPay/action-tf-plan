@@ -1,6 +1,10 @@
 name: Terraform plan
 description: Plan the Terraform script and (optionally) upload the resulting artifact
 inputs:
+  artifact-name:
+    description: Name of the artifact to upload, if any
+    required: false
+    default: plan_output
   comment-pr:
     description: If true it will add a comment to the related PR (if any) with the plan output
     required: false
@@ -90,6 +94,6 @@ runs:
     - if: inputs.upload-artifact == 'true'
       uses: actions/upload-artifact@v2.3.1
       with:
-        name: plan_output
+        name: ${{ inputs.artifact-name }}
         if-no-files-found: error
         path: ${{ inputs.working-directory }}/${{ inputs.output-path }}
