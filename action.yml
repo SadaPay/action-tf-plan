@@ -5,10 +5,6 @@ inputs:
     description: Name of the artifact to upload, if any
     required: false
     default: plan_output
-  comment-pr:
-    description: If true it will add a comment to the related PR (if any) with the plan output
-    required: false
-    default: false
   github-token:
     description: Token to access the GitHub APIs
     required: false
@@ -55,27 +51,6 @@ runs:
         export TF_VAR_github_repo_name="$GITHUB_REPOSITORY"
         terraform plan \
           -out ${{ inputs.output-path }}
-
-    - if: inputs.comment-pr == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
-      name: Set plan output
-      id: plan_output
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      env:
-        DELIMITER: "─────────────────────────────────────────────────────────────────────────────"
-      run: |
-        TF_OUTPUT=$(terraform show -no-color ${{ inputs.output-path }})
-        TF_OUTPUT=${TF_OUTPUT#*${DELIMITER}}
-        DATA=$(printf "\`\`\`\n%s\n\`\`\`" "$TF_OUTPUT" | jq -R --slurp ".")
-        echo "::set-output name=plan::${DATA}"
-
-    - if: inputs.comment-pr == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
-      name: Comment PR
-      uses: SadaPay/action-comment-pr@49784c1bf0a8ba9f21bf808d1afe50c674a2e8bd
-      with:
-        title: ${{ inputs.comment-title }}
-        body: ${{ steps.plan_output.outputs.plan }}
-        github-token: ${{ inputs.github-token }}
 
     - name: Check for changes
       id: check_changes
