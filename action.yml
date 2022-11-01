@@ -60,10 +60,10 @@ runs:
         NO_CHANGES=$(terraform show ${{ inputs.output-path }} | grep "No changes." || true)
         if [ -n "$NO_CHANGES" ]; then
           echo "Plan has no changes"
-          echo "::set-output name=with_changes::false"
+          echo "with_changes=false" >> $GITHUB_OUTPUT
         else
           echo "Plan has changes"
-          echo "::set-output name=with_changes::true"
+          echo "with_changes=true" >> $GITHUB_OUTPUT
         fi
 
     - if: inputs.upload-artifact == 'true'
