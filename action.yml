@@ -17,6 +17,9 @@ inputs:
     description: Path where to store the resulting output plan
     required: false
     default: output
+  target:
+    description: Instructs Terraform to focus its planning efforts only on resource instances which match the given address and on any objects that those instances depend on.
+    required: false
   upload-artifact:
     description: Set to true to upload the resulting artifact with the TF plan
     required: false
@@ -49,7 +52,12 @@ runs:
       run: |
         export TF_VAR_created_by_ci="$CI"
         export TF_VAR_github_repo_name="$GITHUB_REPOSITORY"
+        if [ -n "${{ inputs.target }}" ]; then
+          ARGS='-target=${{ inputs.target }}'
+        fi
+        echo "Additional terraform arguments: $ARGS"
         terraform plan \
+          $ARGS \
           -out ${{ inputs.output-path }}
 
     - name: Check for changes
